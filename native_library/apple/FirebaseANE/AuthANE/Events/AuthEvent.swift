@@ -15,6 +15,7 @@
  */
 
 import Foundation
+import FreSwift
 
 class AuthEvent: NSObject {
     public static let EMAIL_UPDATED = "AuthEvent.EmailUpdated"
@@ -34,20 +35,32 @@ class AuthEvent: NSObject {
     
     var callbackId: String?
     var data: [String: Any]?
-    var error: NSError?
+    var error: [String: Any]?
     
-    convenience init(callbackId: String?, data: [String: Any]? = nil, error: NSError? = nil) {
+    convenience init(callbackId: String?, data: [String: Any]? = nil, error: Any? = nil) {
         self.init()
         self.callbackId = callbackId
         self.data = data
-        self.error = error
+        if let error = error as? NSError {
+            self.error = error.toDictionary()
+        } else if let error = error as? FreError {
+            self.error = [
+                "text": error.localizedDescription,
+                "id": error.type
+            ]
+        } else if let error = error as? Error {
+            self.error = [
+                "text": error.localizedDescription,
+                "id": -1
+            ]
+        }
     }
     
     public func toJSONString() -> String {
         var props = [String: Any]()
         props["callbackId"] = callbackId
         props["data"] = data
-        props["error"] = error?.toDictionary()
+        props["error"] = error
         return JSON(props).description
     }
 }

@@ -22,22 +22,22 @@ public class SwiftController: NSObject {
     public static var TAG = "SwiftController"
     public var context: FreContextSwift!
     public var functionsToSet: FREFunctionMap = [:]
-    
+
     private var authController: AuthController?
     private var userController: UserController?
-    
+
     // MARK: - Init
-    
+
     func createGUID(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         return UUID().uuidString.toFREObject()
     }
-    
+
     func initController(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         authController = AuthController(context: context)
         userController = UserController(context: context)
         return true.toFREObject()
     }
-    
+
     func createUserWithEmailAndPassword(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 2,
             let email = String(argv[0]),
@@ -48,20 +48,28 @@ public class SwiftController: NSObject {
         let callbackId = String(argv[2])
         authController?.createUser(email: email, password: password, callbackId: callbackId)
         return nil
-        
+
     }
-    
+
     func signInWithCredential(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
-        guard argc > 1,
-            let credential = AuthCredential.fromFREObject(argv[0])
-            else {
-                return FreArgError().getError()
+        guard argc >= 2 else {
+            return FreArgError(message: "two arguments expected").getError()
         }
+
         let callbackId = String(argv[1])
-        authController?.signIn(credential: credential, callbackId: callbackId)
+        AuthCredential.fromFREObject(argv[0]) { (credential, error) in
+            if let error = error {
+                self.dispatchEvent(name: AuthEvent.SIGN_IN, value: AuthEvent(callbackId: callbackId, error: error).toJSONString())
+            } else if let credential = credential {
+                self.authController?.signIn(credential: credential, callbackId: callbackId)
+            } else {
+                let error = FreError(message: "empty credentials", type: FreError.Code.illegalState)
+                self.dispatchEvent(name: AuthEvent.SIGN_IN, value: AuthEvent(callbackId: callbackId, error: error).toJSONString())
+            }
+        }
         return nil
     }
-    
+
     func signInWithProvider(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 1,
             let provider: OAuthProvider = OAuthProvider.fromFREObject(argv[0])
@@ -72,7 +80,7 @@ public class SwiftController: NSObject {
         authController?.signIn(provider: provider, callbackId: callbackId)
         return nil
     }
-    
+
     func signInAnonymously(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 0
             else {
@@ -82,7 +90,7 @@ public class SwiftController: NSObject {
         authController?.signInAnonymously(callbackId: callbackId)
         return nil
     }
-    
+
     func signInWithCustomToken(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 1,
             let token = String(argv[0])
@@ -93,7 +101,7 @@ public class SwiftController: NSObject {
         authController?.signInWithCustomToken(token: token, callbackId: callbackId)
         return nil
     }
-    
+
     func updateProfile(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 2
             else {
@@ -105,18 +113,18 @@ public class SwiftController: NSObject {
         userController?.updateProfile(displayName: displayName, photoUrl: photoUrl, callbackId: callbackId)
         return nil
     }
-    
+
     func signOut(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         authController?.signOut()
         return nil
     }
-    
+
     func sendEmailVerification(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         let callbackId = String(argv[0])
         userController?.sendEmailVerification(callbackId: callbackId)
         return nil
     }
-    
+
     func updateEmail(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 1,
             let email = String(argv[0])
@@ -127,7 +135,7 @@ public class SwiftController: NSObject {
         userController?.update(email: email, callbackId: callbackId)
         return nil
     }
-    
+
     func updatePassword(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 1,
             let password = String(argv[0])
@@ -138,7 +146,7 @@ public class SwiftController: NSObject {
         userController?.update(password: password, callbackId: callbackId)
         return nil
     }
-    
+
     func sendPasswordResetEmail(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 1,
             let email = String(argv[0])
@@ -149,7 +157,7 @@ public class SwiftController: NSObject {
         authController?.sendPasswordReset(email: email, callbackId: callbackId)
         return nil
     }
-    
+
     func reauthenticate(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 2,
             let email = String(argv[0]),
@@ -161,7 +169,7 @@ public class SwiftController: NSObject {
         authController?.reauthenticate(email: email, password: password, callbackId: callbackId)
         return nil
     }
-    
+
     func unlink(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 1,
             let provider = String(argv[0])
@@ -172,18 +180,26 @@ public class SwiftController: NSObject {
         userController?.unlink(provider: provider, callbackId: callbackId)
         return nil
     }
-    
+
     func link(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
-        guard argc > 1,
-            let credential: AuthCredential = AuthCredential.fromFREObject(argv[0])
-            else {
-                return FreArgError().getError()
+        guard argc >= 2 else {
+            return FreArgError(message: "two arguments expected").getError()
         }
+
         let callbackId = String(argv[1])
-        userController?.link(credential: credential, callbackId: callbackId)
+        AuthCredential.fromFREObject(argv[0]) { (credential, error) in
+            if let error = error {
+                self.dispatchEvent(name: AuthEvent.SIGN_IN, value: AuthEvent(callbackId: callbackId, error: error).toJSONString())
+            } else if let credential = credential {
+                self.userController?.link(credential: credential, callbackId: callbackId)
+            } else {
+                let error = FreError(message: "empty credentials", type: FreError.Code.illegalState)
+                self.dispatchEvent(name: AuthEvent.SIGN_IN, value: AuthEvent(callbackId: callbackId, error: error).toJSONString())
+            }
+        }
         return nil
     }
-    
+
     func deleteUser(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 0
             else {
@@ -193,7 +209,7 @@ public class SwiftController: NSObject {
         userController?.deleteUser(callbackId: callbackId)
         return nil
     }
-    
+
     func setLanguageCode(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 0,
             let code = String(argv[0])
@@ -203,15 +219,15 @@ public class SwiftController: NSObject {
         authController?.setLanguage(code: code)
         return nil
     }
-    
+
     func getLanguageCode(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         return authController?.getLanguage()?.toFREObject()
     }
-    
+
     func getCurrentUser(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         return userController?.getCurrentUser()?.toFREObject()
     }
-    
+
     func getIdToken(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 1,
             let forceRefresh = Bool(argv[0]),
@@ -222,7 +238,7 @@ public class SwiftController: NSObject {
         userController?.getIdToken(forceRefresh: forceRefresh, callbackId: callbackId)
         return nil
     }
-    
+
     func reload(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 0
             else {
@@ -232,7 +248,7 @@ public class SwiftController: NSObject {
         userController?.reload(callbackId: callbackId)
         return nil
     }
-    
+
     func verifyPhoneNumber(ctx: FREContext, argc: FREArgc, argv: FREArgv) -> FREObject? {
         guard argc > 1,
             let phoneNumber = String(argv[0])
@@ -243,5 +259,5 @@ public class SwiftController: NSObject {
         authController?.verifyPhoneNumber(phoneNumber: phoneNumber, callbackId: callbackId)
         return nil
     }
-    
+
 }

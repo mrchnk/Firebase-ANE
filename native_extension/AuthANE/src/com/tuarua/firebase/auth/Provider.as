@@ -7,5 +7,6 @@ public final class Provider {
     public static const EMAIL:String = "password";
     public static const PHONE:String = "phone";
     public static const PLAY_GAMES:String = "playgames.google.com";
+    public static const GAME_CENTER:String = "gc.apple.com";
 }
 }

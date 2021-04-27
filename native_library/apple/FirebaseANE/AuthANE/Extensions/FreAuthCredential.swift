@@ -13,34 +13,55 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 import FreSwift
 import Foundation
 import FirebaseAuth
 
 extension AuthCredential {
-    static func fromFREObject(_ freObject: FREObject?) -> AuthCredential? {
-        guard let rv = freObject,
-            let provider = String(rv["provider"])
-            else { return nil }
-        
+    static func fromFREObject(_ freObject: FREObject?, completion: @escaping (AuthCredential?, Error?) -> Void) -> Void {
+        guard let rv = freObject, let provider = String(rv["provider"]) else {
+            return completion(nil, FreArgError(message: "invalid credential object"))
+        }
+
         let param0 = String(rv["param0"])
         let param1 = String(rv["param1"])
-        
-        if provider == GoogleAuthProviderID, let p0 = param0, let p1 = param1 {
-            return GoogleAuthProvider.credential(withIDToken: p0, accessToken: p1)
-        } else if provider == TwitterAuthProviderID, let p0 = param0, let p1 = param1 {
-            return TwitterAuthProvider.credential(withToken: p0, secret: p1)
-        } else if provider == GitHubAuthProviderID, let p0 = param0 {
-            return GitHubAuthProvider.credential(withToken: p0)
-        } else if provider == FacebookAuthProviderID, let p0 = param0 {
-            return FacebookAuthProvider.credential(withAccessToken: p0)
-        } else if provider == EmailAuthProviderID, let p0 = param0, let p1 = param1 {
-            return EmailAuthProvider.credential(withEmail: p0, password: p1)
-        } else if provider == PhoneAuthProviderID, let p0 = param0, let p1 = param1 {
-            return PhoneAuthProvider.provider().credential(
-                withVerificationID: p0,
-                verificationCode: p1)
+        if provider == GoogleAuthProviderID {
+            guard let idToken = param0, let accessToken = param1 else {
+                return completion(nil, FreArgError(message: "idToken (param0) or accessToken (param1) needed"))
+            }
+            completion(GoogleAuthProvider.credential(withIDToken: idToken, accessToken: accessToken), nil)
+        } else if provider == TwitterAuthProviderID {
+            guard let token = param0, let secret = param1 else {
+                return completion(nil, FreArgError(message: "token (param0) or secret (param1) needed"))
+            }
+            completion(TwitterAuthProvider.credential(withToken: token, secret: secret), nil)
+        } else if provider == GitHubAuthProviderID {
+            guard let token = param0 else {
+                return completion(nil, FreArgError(message: "token (param0) needed"))
+            }
+            completion(GitHubAuthProvider.credential(withToken: token), nil)
+        } else if provider == FacebookAuthProviderID {
+            guard let accessToken = param0 else {
+                return completion(nil, FreArgError(message: "accessToken (param0) needed"))
+            }
+            completion(FacebookAuthProvider.credential(withAccessToken: accessToken), nil)
+        } else if provider == EmailAuthProviderID {
+            guard let email = param0, let password = param1 else {
+                return completion(nil, FreArgError(message: "email (param0) or password (param1) needed"))
+            }
+            completion(EmailAuthProvider.credential(withEmail: email, password: password), nil)
+        } else if provider == PhoneAuthProviderID {
+            guard let verificationId = param0, let code = param1 else {
+                return completion(nil, FreArgError(message: "verificationId (param0) or code (param1) needed"))
+            }
+            completion(PhoneAuthProvider.provider().credential(
+                    withVerificationID: verificationId,
+                    verificationCode: code), nil)
+        } else if provider == GameCenterAuthProviderID {
+            return GameCenterAuthProvider.getCredential(completion: completion)
+        } else {
+            completion(nil, FreArgError(message: "unsupported provider \(provider)"))
         }
-        return nil
     }
 }
