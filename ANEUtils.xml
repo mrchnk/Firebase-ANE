@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="ANEUtils" default="swc">
+    <target name="swc">
+        <ant antfile="build-swc.xml">
+            <property name="name" value="ANEUtils" />
+            <property name="dir" location="native_extension/ANEUtils" />
+            <property name="swc.out" location="native_extension/bin/ANEUtils.swc" />
+        </ant>
+    </target>
+</project>

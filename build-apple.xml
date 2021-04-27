@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="apple" default="main">
+
+    <target name="init">
+        <property name="apple.xcodebuild.exec" value="xcodebuild" />
+        <property name="apple.scheme" value="${name}ANE_LIB" />
+        <property name="apple.configuration" value="Release" />
+        <property name="apple.project.dir" location="native_library/apple/FirebaseANE" />
+    </target>
+
+    <target name="build-simulator" depends="init">
+        <exec executable="${apple.xcodebuild.exec}" dir="${apple.project.dir}" failonerror="true">
+            <arg line="-scheme ${apple.scheme}" />
+            <arg line="-sdk iphonesimulator" />
+            <arg line="-configuration ${apple.configuration}" />
+            <arg value="SYMROOT=Build" />
+            <arg value="ONLY_ACTIVE_ARCH=NO" />
+            <arg value="ARCHS=x86_64 i386" />
+        </exec>
+    </target>
+
+    <target name="build-ios" depends="init">
+        <exec executable="${apple.xcodebuild.exec}" dir="${apple.project.dir}" failonerror="true">
+            <arg line="-scheme ${apple.scheme}" />
+            <arg line="-sdk iphoneos" />
+            <arg line="-configuration ${apple.configuration}" />
+            <arg value="SYMROOT=Build" />
+        </exec>
+    </target>
+
+    <target name="main" depends="build-ios,build-simulator" />
+
+</project>

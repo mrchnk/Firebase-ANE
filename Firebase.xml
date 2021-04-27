@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="Firebase" default="main">
+
+    <target name="swc">
+        <pathconvert property="FirebaseANE.swc.libs">
+            <path>
+                <pathelement location="native_extension/bin/ANEUtils.swc" />
+                <pathelement location="native_extension/AnalyticsANE/bin/AnalyticsANE.swc" />
+                <pathelement location="native_extension/AuthANE/bin/AuthANE.swc" />
+                <pathelement location="native_extension/CrashlyticsANE/bin/CrashlyticsANE.swc" />
+                <pathelement location="native_extension/DynamicLinksANE/bin/DynamicLinksANE.swc" />
+                <pathelement location="native_extension/FirestoreANE/bin/FirestoreANE.swc" />
+                <pathelement location="native_extension/MessagingANE/bin/MessagingANE.swc" />
+                <pathelement location="native_extension/StorageANE/bin/StorageANE.swc" />
+                <pathelement location="native_extension/RemoteConfigANE/bin/RemoteConfigANE.swc" />
+            </path>
+        </pathconvert>
+
+        <ant antfile="build-swc.xml">
+            <property name="name" value="Firebase" />
+            <property name="dir" location="native_extension" />
+            <property name="swc.libs" value="${FirebaseANE.swc.libs}" />
+        </ant>
+    </target>
+
+    <target name="android">
+        <ant antfile="build-android.xml">
+            <property name="name" value="Firebase" />
+        </ant>
+    </target>
+
+    <target name="apple">
+        <ant antfile="build-apple.xml">
+            <property name="name" value="Firebase" />
+        </ant>
+    </target>
+
+    <target name="ane">
+        <pathconvert property="FirebaseANE.ane.frameworks">
+            <path>
+                <pathelement path="FreSwift.framework" />
+                <pathelement path="Firebase.framework" />
+                <pathelement path="FirebaseCore.framework" />
+                <pathelement path="FirebaseCoreDiagnostics.framework" />
+                <pathelement path="GoogleDataTransport.framework" />
+                <pathelement path="GoogleToolboxForMac.framework" />
+                <pathelement path="GoogleUtilities.framework" />
+                <pathelement path="nanopb.framework" />
+                <pathelement path="FirebaseInstallations.framework" />
+                <pathelement path="PromisesObjC.framework" />
+                <pathelement path="FirebaseInstanceID.framework" />
+                <pathelement path="GoogleAppMeasurement.framework" />
+                <pathelement path="Protobuf.framework" />
+            </path>
+        </pathconvert>
+
+        <ant antfile="build-ane.xml">
+            <property name="name" value="Firebase" />
+            <property name="dir" location="native_extension" />
+            <property name="apple.frameworks" value="${FirebaseANE.ane.frameworks}" />
+        </ant>
+    </target>
+
+    <target name="main" depends="swc,android,apple,ane" />
+
+</project>

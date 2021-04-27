@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="FirebaseANEs" default="all">
+
+    <property file="build.properties" />
+
+    <include file="ANEUtils.xml" />
+    <include file="Firebase.xml" />
+    <include file="Auth.xml" />
+    <include file="GoogleSignIn.xml" />
+
+    <target name="all" depends="
+        ANEUtils.swc,
+        Auth.main,
+        GoogleSignIn.main,
+        Firebase.main"/>
+
+</project>

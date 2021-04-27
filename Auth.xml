@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="Auth" default="main">
+
+    <target name="swc">
+        <ant antfile="build-swc.xml">
+            <property name="name" value="Auth" />
+            <property name="swc.libs" value="native_extension/bin/ANEUtils.swc" />
+        </ant>
+    </target>
+
+    <target name="android">
+        <ant antfile="build-android.xml">
+            <property name="name" value="Auth" />
+        </ant>
+    </target>
+
+    <target name="apple">
+        <ant antfile="build-apple.xml">
+            <property name="name" value="Auth" />
+        </ant>
+    </target>
+
+    <target name="ane">
+        <pathconvert property="AuthANE.ane.frameworks">
+            <path>
+                <pathelement path="FirebaseAuth.framework" />
+                <pathelement path="GTMSessionFetcher.framework" />
+            </path>
+        </pathconvert>
+
+        <ant antfile="build-ane.xml">
+            <property name="name" value="Auth" />
+            <property name="apple.frameworks" value="${AuthANE.ane.frameworks}" />
+        </ant>
+    </target>
+
+    <target name="main" depends="swc,android,apple,ane" />
+
+</project>

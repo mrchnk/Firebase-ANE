@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="GoogleSignIn" default="main">
+
+    <target name="swc">
+        <ant antfile="build-swc.xml">
+            <property name="name" value="GoogleSignIn" />
+            <property name="swc.libs" value="native_extension/bin/ANEUtils.swc" />
+        </ant>
+    </target>
+
+    <target name="android">
+        <ant antfile="build-android.xml">
+            <property name="name" value="GoogleSignIn" />
+        </ant>
+    </target>
+
+    <target name="apple">
+        <ant antfile="build-apple.xml">
+            <property name="name" value="GoogleSignIn" />
+        </ant>
+    </target>
+
+    <target name="ane">
+        <pathconvert property="GoogleSignIn.frameworks">
+            <path>
+                <pathelement path="GoogleSignIn.framework" />
+                <pathelement path="GTMSessionFetcher.framework" />
+                <pathelement path="AppAuth.framework" />
+                <pathelement path="GTMAppAuth.framework" />
+            </path>
+        </pathconvert>
+
+        <ant antfile="build-ane.xml">
+            <property name="name" value="GoogleSignIn" />
+            <property name="apple.frameworks" value="${GoogleSignIn.frameworks}" />
+            <property name="android.res" value="com.tuarua.google.GoogleSignInANE-res" />
+        </ant>
+    </target>
+
+    <target name="main" depends="swc,android,apple,ane" />
+
+</project>

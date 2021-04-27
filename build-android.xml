@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="android" default="build">
+
+    <target name="init">
+        <condition property="gradlew.exec" value="gradlew.bat" else="gradlew">
+            <os family="windows" />
+        </condition>
+        <property environment="Env" />
+        <property name="android-sdk" value="${Env.ANDROID_SDK_ROOT}" />
+        <property name="android.project.dir" location="native_library/android/FirebaseANE" />
+        <property name="android.target" value=":${name}:build" />
+    </target>
+
+    <target name="build" depends="init">
+        <exec executable="${android.project.dir}/${gradlew.exec}" dir="${android.project.dir}" failonerror="true">
+            <env key="ANDROID_SDK_ROOT" value="${android-sdk}" />
+            <arg value="${android.target}" />
+        </exec>
+    </target>
+</project>

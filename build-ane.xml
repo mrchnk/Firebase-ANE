@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="ane" default="main">
+
+    <target name="init">
+        <property name="dir" location="native_extension/${name}ANE" />
+        <property name="descriptor" location="${dir}/ane/extension_multi.xml" />
+        <property name="out" location="${dir}/ane/${name}ANE.ane" />
+        <property name="swc" location="${dir}/bin/${name}ANE.swc" />
+
+        <property name="android.aar" location="native_library/android/FirebaseANE/${name}/build/outputs/aar/${name}-release.aar" />
+        <property name="android.platformOptions" location="${dir}/ane/platforms/android/platform.xml" />
+        <property name="android.res" value="com.tuarua.firebase.${name}ANE-res" />
+        <property name="apple.lib.name" value="lib${name}ANE.a" />
+        <property name="apple.ios.lib" location="native_library/apple/FirebaseANE/Build/Release-iphoneos/lib${name}ANE_LIB.a" />
+        <property name="apple.simulator.lib" location="native_library/apple/FirebaseANE/Build/Release-iphonesimulator/lib${name}ANE_LIB.a" />
+        <property name="apple.platformOptions" location="${dir}/ane/platforms/ios/platform.xml" />
+        <property name="apple.frameworks" value="" />
+        <echoproperties prefix="apple" />
+
+        <property environment="Env" />
+        <property name="air-sdk" value="${Env.AIR_SDK}" />
+        <property name="air-sdk.adt.jar" location="${air-sdk}/lib/adt.jar" />
+        <property name="apple.frameworks.base" location="native_library/apple/FirebaseANE/Carthage/Build/iOS" />
+    </target>
+
+    <target name="prepare-swf" depends="init">
+        <unzip src="${swc}" dest="${dir}/ane">
+            <patternset includes="library.swf" />
+        </unzip>
+    </target>
+
+    <target name="prepare-android" depends="init">
+        <mkdir dir="${dir}/ane/Android" />
+        <unzip src="${android.aar}" dest="${dir}/ane/Android">
+            <patternset includes="classes.jar" />
+        </unzip>
+        <unzip src="${android.aar}" dest="${dir}/ane/Android">
+            <patternset includes="res/**" />
+            <mapper type="glob" from="res/*" to="${android.res}/*" />
+        </unzip>
+    </target>
+
+    <target name="prepare-apple" depends="init">
+        <mkdir dir="${dir}/ane/iPhone/Frameworks" />
+        <mkdir dir="${dir}/ane/iPhone-x86" />
+        <mkdir dir="${dir}/ane/iPhone-ARM" />
+
+        <copy file="${apple.ios.lib}" tofile="${dir}/ane/iPhone-ARM/${apple.lib.name}" />
+        <copy file="${apple.simulator.lib}" tofile="${dir}/ane/iPhone-x86/${apple.lib.name}" />
+        <local name="fv" />
+        <pathconvert property="fv" pathsep=" ">
+            <path>
+                <pathelement path="${apple.frameworks}" />
+            </path>
+            <mapper type="regexp" from="${basedir}/(.+)" to="\1/**" />
+        </pathconvert>
+        <sync todir="${dir}/ane/iPhone/Frameworks">
+            <fileset dir="${apple.frameworks.base}" includes="${fv}">
+            </fileset>
+        </sync>
+    </target>
+
+    <target name="package" depends="init">
+        <java jar="${air-sdk.adt.jar}" fork="true" failonerror="true" maxmemory="8g">
+            <jvmarg value="-Xmx1g"/>
+            <jvmarg value="-Duser.language=en"/>
+            <jvmarg value="-Duser.region=US"/>
+            <arg value="-package" />
+            <arg line="-target ane" />
+            <arg value="${out}" />
+            <arg value="${descriptor}" />
+            <arg value="-swc" />
+            <arg value="${swc}" />
+
+            <arg line="-platform Android-ARM" />
+            <arg line="-platformoptions ${android.platformOptions}" />
+            <arg line="-C ${dir}/ane/Android classes.jar" />
+            <arg line="-C ${dir}/ane/Android ${android.res}" />
+            <arg line="-C ${dir}/ane library.swf" />
+
+            <arg line="-platform Android-ARM64" />
+            <arg line="-platformoptions ${android.platformOptions}" />
+            <arg line="-C ${dir}/ane/Android classes.jar" />
+            <arg line="-C ${dir}/ane/Android ${android.res}" />
+            <arg line="-C ${dir}/ane library.swf" />
+
+            <arg line="-platform Android-x86" />
+            <arg line="-platformoptions ${android.platformOptions}" />
+            <arg line="-C ${dir}/ane/Android classes.jar" />
+            <arg line="-C ${dir}/ane/Android ${android.res}" />
+            <arg line="-C ${dir}/ane library.swf" />
+
+            <arg line="-platform iPhone-x86" />
+            <arg line="-platformoptions ${apple.platformOptions}" />
+            <arg line="-C ${dir}/ane/iPhone-x86 ${apple.lib.name}" />
+            <arg line="-C ${dir}/ane/iPhone Frameworks" />
+            <arg line="-C ${dir}/ane library.swf" />
+
+            <arg line="-platform iPhone-ARM" />
+            <arg line="-platformoptions ${apple.platformOptions}" />
+            <arg line="-C ${dir}/ane/iPhone-ARM ${apple.lib.name}" />
+            <arg line="-C ${dir}/ane/iPhone Frameworks" />
+            <arg line="-C ${dir}/ane library.swf" />
+
+            <arg line="-platform default" />
+            <arg line="-C ${dir}/ane library.swf" />
+        </java>
+    </target>
+
+    <target name="extra" depends="init">
+        <zip file="${out}" update="true">
+            <fileset file="${dir}/ane/AndroidManifest.xml" />
+            <fileset file="${dir}/ane/air_package.json" />
+            <fileset file="${dir}/ane/Entitlements.entitlements" />
+            <fileset file="${dir}/ane/InfoAdditions.plist" />
+        </zip>
+    </target>
+
+    <target name="main" depends="prepare-android,prepare-apple,prepare-swf,package" />
+
+</project>

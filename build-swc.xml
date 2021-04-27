@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="swc" default="build">
+
+    <target name="init">
+        <property name="dir" location="native_extension/${name}ANE" />
+        <property environment="Env" />
+        <property name="air-sdk" value="${Env.AIR_SDK}" />
+        <property name="air-sdk.compc.jar" location="${air-sdk}/lib/compc-cli.jar" />
+        <property name="air-sdk.frameworks" location="${air-sdk}/frameworks" />
+        <property name="swc.swf-version" value="30" />
+        <property name="swc.debug" value="false" />
+        <property name="swc.arguments" value="" />
+        <property name="swc.libs" value="" />
+        <property name="swc.src" location="${dir}/src" />
+        <property name="swc.out" location="${dir}/bin/${name}ANE.swc" />
+    </target>
+
+    <target name="build" depends="init">
+        <local name="library-path" />
+        <pathconvert property="library-path" pathsep=" ">
+            <path><pathelement path="${swc.libs}" /></path>
+            <map from="${basedir}/" to="--library-path+=" />
+        </pathconvert>
+
+        <java jar="${air-sdk.compc.jar}" fork="true" failonerror="true">
+            <jvmarg value="-Xmx1024m"/>
+            <jvmarg value="-Duser.language=en"/>
+            <jvmarg value="-Duser.region=US"/>
+            <jvmarg value="-Dflexlib=${air-sdk.frameworks}"/>
+
+            <arg value="+configname=airmobile" />
+            <arg value="-swf-version=${swc.swf-version}" />
+            <arg value="-compiler.debug=${swc.debug}"/>
+            <arg value="-output=${swc.out}"/>
+            <arg value="-compiler.source-path=${swc.src}" />
+            <arg value="-include-sources=${swc.src}" />
+
+            <arg line="${library-path}" />
+            <arg line="${swc.arguments}" />
+        </java>
+    </target>
+</project>
