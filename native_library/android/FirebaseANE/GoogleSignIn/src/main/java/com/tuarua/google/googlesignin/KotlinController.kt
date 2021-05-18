@@ -15,15 +15,16 @@
  */
 package com.tuarua.google.googlesignin
 
-import android.content.res.Resources
 import com.adobe.fre.FREContext
 import com.adobe.fre.FREObject
-import com.adobe.fre.FREArray
 import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.Scope
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.tasks.Task
+import com.google.gson.Gson
 import com.tuarua.frekotlin.*
+import com.tuarua.google.googlesignin.events.GoogleSignInEvent
 import com.tuarua.google.googlesignin.extensions.GoogleSignInOptions
 import java.util.*
 
@@ -58,8 +59,37 @@ class KotlinController : FreKotlinMainController {
     }
 
     fun signInSilently(ctx: FREContext, argv: FREArgv): FREObject? {
-        googleSignInClient?.silentSignIn()
+        val task = googleSignInClient?.silentSignIn() ?: return null
+        if (task.isComplete) {
+            dispatchSignIn(task)
+        } else {
+            task.addOnCompleteListener {
+                dispatchSignIn(task)
+            }
+        }
         return null
+    }
+
+    private fun dispatchSignIn(task: Task<GoogleSignInAccount>) {
+        try {
+            val account = task.getResult(ApiException::class.java) ?: return
+            dispatchEvent(GoogleSignInEvent.SIGN_IN, Gson().toJson(GoogleSignInEvent(mapOf(
+                    "id" to account.id,
+                    "idToken" to account.idToken,
+                    "serverAuthCode" to account.serverAuthCode,
+                    "email" to account.email,
+                    "photoUrl" to account.photoUrl,
+                    "displayName" to account.displayName,
+                    "familyName" to account.familyName,
+                    "givenName" to account.givenName,
+                    "grantedScopes" to account.grantedScopes.toList().map { scope -> scope.scopeUri }
+            ))))
+        } catch (e: ApiException) {
+            dispatchEvent(GoogleSignInEvent.ERROR, Gson().toJson(GoogleSignInEvent(mapOf(
+                    "id" to e.statusCode,
+                    "text" to e.localizedMessage
+            ))))
+        }
     }
 
     fun signOut(ctx: FREContext, argv: FREArgv): FREObject? {
